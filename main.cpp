@@ -24,27 +24,57 @@
 
 using namespace ccvt;
 
-int main(int , char * [])
-{
-  const int     NUMBER_SITES  = 1024;
-  const int     NUMBER_POINTS = 1024;
-  const double  TORUS_SIZE    = 1000;
-  const bool    CENTROIDAL    = true;
-  const bool    RESULT_PRINT  = false;
-  const char*   RESULT_FILE   = "result.eps";
-  const double  RESULT_RADIUS = 3;
-  
-  typedef Optimizer<Point2, MetricToroidalEuclidean2> Optimizer;
-
-  Point2::List points;
-  for (double x = 0; x < NUMBER_POINTS; ++x) {
-    for (double y = 0; y < NUMBER_POINTS; ++y) {
-      double dx = x / NUMBER_POINTS * TORUS_SIZE;
-      double dy = y / NUMBER_POINTS * TORUS_SIZE;
+// discrete space with constant density
+// that points form a regular grid
+void constant_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
+  double n = sqrt(double(numberOfPoints));
+  for (int x = 0; x < n; ++x) {
+    for (int y = 0; y < n; ++y) {
+      double dx = x / n * torusSize;
+      double dy = y / n * torusSize;
       points.push_back(Point2(dx, dy));
     }
   }
+}
 
+// discrete space with the density function e^(-20x^2-20y^2)+0.2sin^2(PIx)sin^2(PIy)
+// the points are generated via rejection sampling
+void nonconstant_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
+  const double E = 2.718281828459;
+  const double PI = 3.141592653590;
+  while (points.size() < unsigned int(numberOfPoints)) {
+    double x = double(rand() % (RAND_MAX + 1)) / RAND_MAX * 2 - 1;
+    double y = double(rand() % (RAND_MAX + 1)) / RAND_MAX * 2 - 1;
+    double p = pow(E, -20.0 * x * x - 20.0 * y * y) + 0.2 * sin(PI * x) * sin(PI * x) * sin(PI * y) * sin(PI * y);
+    double r = double(rand() % (RAND_MAX + 1)) / RAND_MAX;
+    if (p >= r) {
+      points.push_back(Point2((x + 1) / 2 * torusSize, (y + 1) / 2 * torusSize));
+    }
+  }
+}
+
+int main(int , char * []) {
+  const int     NUMBER_SITES      = 256;
+  const int     NUMBER_POINTS     = 1024 * NUMBER_SITES;
+  const double  TORUS_SIZE        = 1000;
+  const bool    CONSTANT_DENSITY  = true;
+  const bool    CENTROIDAL        = true;
+  const bool    RESULT_PRINT      = false;
+  const bool    RESULT_FILE       = true;
+  const char*   RESULT_FILENAME   = "result.eps";
+  const double  RESULT_RADIUS     = 5;
+  
+  typedef Optimizer<Point2, MetricToroidalEuclidean2> Optimizer;
+
+  // intializing the underlying discrete space
+  Point2::List points;
+  if (CONSTANT_DENSITY) {
+    constant_density(points, NUMBER_POINTS, TORUS_SIZE);
+  } else {
+    nonconstant_density(points, NUMBER_POINTS, TORUS_SIZE);
+  }
+
+  // initializing the Voronoi sites with equal capacity
   unsigned int overallCapacity = static_cast<int>(points.size());
   Optimizer::Site::Vector sites(NUMBER_SITES);
   for (int i = 0; i < static_cast<int>(sites.size()); ++i) {
@@ -57,6 +87,7 @@ int main(int , char * [])
 
   clock_t start = clock();
 
+  // initializing the CCVT
   clock_t startInitialization = clock();
   printf("initialization...");
   MetricToroidalEuclidean2 metric(Point2(TORUS_SIZE, TORUS_SIZE));
@@ -65,6 +96,7 @@ int main(int , char * [])
   printf("done\n");
   clock_t endInitialization = clock();
 
+  // optimization
   int iteration = 0;
   bool stable;
   do {
@@ -75,6 +107,7 @@ int main(int , char * [])
   
   clock_t end = clock();
   
+  // writing the Voronoi sites to console
   if (RESULT_PRINT) {
     printf("\nresult:\n");
     for (unsigned int j = 0; j < sites.size(); ++j) {
@@ -85,10 +118,13 @@ int main(int , char * [])
   printf("\ninitialization time: %.3f sec\n", static_cast<double>(endInitialization - startInitialization) / CLOCKS_PER_SEC);
   printf("computation time: %.3f sec\n", static_cast<double>(end - start) / CLOCKS_PER_SEC);
 
-  if (Functions::save_eps(RESULT_FILE, sites, TORUS_SIZE, TORUS_SIZE, RESULT_RADIUS)) {
-    printf("\nresult saved in '%s'\n", RESULT_FILE);
-  } else {
-    printf("\nresult could not be saved in '%s'\n", RESULT_FILE);
+  // writing the Voronoi sites to EPS file
+  if (RESULT_FILE) {
+    if (Functions::save_eps(RESULT_FILENAME, sites, TORUS_SIZE, TORUS_SIZE, RESULT_RADIUS)) {
+      printf("\nresult saved in '%s'\n", RESULT_FILENAME);
+    } else {
+      printf("\nresult could not be saved in '%s'\n", RESULT_FILENAME);
+    }
   }
   
   printf("\n");
