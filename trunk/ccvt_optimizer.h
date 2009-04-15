@@ -39,6 +39,10 @@ namespace ccvt {
 
     struct Entry;
 
+    /* The initialization of the optimizer uses a kd-tree to initially assign
+       the points to the sites. A faster method is to use the ordinary Voronoi
+       tessellation for that matter. However, the kd-tree is used because it 
+       can easily be implemented for the n-dimensional case. */
     class KdTree {
 
     public:
