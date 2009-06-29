@@ -194,7 +194,7 @@ namespace ccvt {
   public:
 
     Optimizer(const Metric& metric)
-      : metric_(metric), centroidal_(false) {
+      : metric_(metric) {
     }
 
     void clear() {
@@ -202,8 +202,7 @@ namespace ccvt {
       mapping_.clear();
     }
 
-    void initialize(typename std::vector< Site<Point> >& sites, typename std::list<Point>& points, const bool centroidal) {
-      centroidal_ = centroidal;
+    void initialize(typename std::vector< Site<Point> >& sites, typename std::list<Point>& points) {
       int sitesSize = static_cast<int>(sites.size());
       entries_.reserve(sitesSize);
 
@@ -245,7 +244,7 @@ namespace ccvt {
       }
     }
 
-    bool optimize() {
+    bool optimize(const bool centroidalize) {
       int entriesSize = static_cast<int>(entries_.size());
       std::vector<bool> stability(entriesSize, true);
       for (int i = 0; i < entriesSize; ++i) {
@@ -322,7 +321,7 @@ namespace ccvt {
           if (swaps > 0) {
             stability[i] = false;
             stability[j] = false;
-            if (centroidal_) {
+            if (centroidalize) {
               entry1->site->location = metric_.centroid(entry1->site->location, entry1->points);
               entry2->site->location = metric_.centroid(entry2->site->location, entry2->points);
             }
@@ -448,7 +447,6 @@ namespace ccvt {
     Metric                  metric_;
     typename Entry::Vector	entries_;
     typename Entry::MapPtr  mapping_;
-    bool                    centroidal_;
 
   };
 

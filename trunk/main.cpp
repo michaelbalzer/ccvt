@@ -63,7 +63,7 @@ void nonconstant_density(Point2::List& points, const int numberOfPoints, const d
   }
 }
 
-int main(int , char * []) {
+int main(int, char*[]) {
   const int     NUMBER_SITES      = 256;
   const int     NUMBER_POINTS     = 1024 * NUMBER_SITES;
   const double  TORUS_SIZE        = 1000;
@@ -102,7 +102,7 @@ int main(int , char * []) {
   printf("initialization...");
   MetricToroidalEuclidean2 metric(Point2(TORUS_SIZE, TORUS_SIZE));
   Optimizer optimizer(metric);
-  optimizer.initialize(sites, points, CENTROIDAL);
+  optimizer.initialize(sites, points);
   printf("done\n");
   clock_t endInitialization = clock();
 
@@ -111,7 +111,7 @@ int main(int , char * []) {
   bool stable;
   do {
     printf("iteration %d...", ++iteration);
-    stable = optimizer.optimize();
+    stable = optimizer.optimize(CENTROIDAL);
     printf("done\n");
   } while (!stable);
   
