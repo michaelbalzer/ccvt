@@ -24,9 +24,9 @@
 
 using namespace ccvt;
 
-// discrete space with constant density
-// that points form a regular grid
-void constant_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
+// discrete space with constant density;
+// the points form a regular grid
+void constant_regular_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
   double n = sqrt(double(numberOfPoints));
   for (int x = 0; x < n; ++x) {
     for (int y = 0; y < n; ++y) {
@@ -37,7 +37,17 @@ void constant_density(Point2::List& points, const int numberOfPoints, const doub
   }
 }
 
-// discrete space with the density function e^(-20x^2-20y^2)+0.2sin^2(PIx)sin^2(PIy)
+// discrete space with constant density;
+// the points are randomly distributed
+void constant_random_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
+  for (int i = 0; i < numberOfPoints; ++i) {
+    double x = double(rand() % (RAND_MAX + 1)) / RAND_MAX * torusSize;
+    double y = double(rand() % (RAND_MAX + 1)) / RAND_MAX * torusSize;
+    points.push_back(Point2(x, y));
+  }
+}
+
+// discrete space with the density function e^(-20x^2-20y^2)+0.2sin^2(PIx)sin^2(PIy);
 // the points are generated via rejection sampling
 void nonconstant_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
   const double E = 2.718281828459;
@@ -69,20 +79,20 @@ int main(int , char * []) {
   // intializing the underlying discrete space
   Point2::List points;
   if (CONSTANT_DENSITY) {
-    constant_density(points, NUMBER_POINTS, TORUS_SIZE);
+    constant_regular_density(points, NUMBER_POINTS, TORUS_SIZE);
   } else {
     nonconstant_density(points, NUMBER_POINTS, TORUS_SIZE);
   }
 
   // initializing the Voronoi sites with equal capacity
   unsigned int overallCapacity = static_cast<int>(points.size());
-  Optimizer::Site::Vector sites(NUMBER_SITES);
+  Site<Point2>::Vector sites(NUMBER_SITES);
   for (int i = 0; i < static_cast<int>(sites.size()); ++i) {
     double x = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * TORUS_SIZE;
     double y = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * TORUS_SIZE;
     int capacity = overallCapacity / (sites.size() - i);
     overallCapacity -= capacity;
-    sites[i] = Optimizer::Site(i, capacity, Point2(x, y));
+    sites[i] = Site<Point2>(i, capacity, Point2(x, y));
   }
 
   clock_t start = clock();
