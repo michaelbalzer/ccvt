@@ -202,7 +202,7 @@ namespace ccvt {
       mapping_.clear();
     }
 
-    void initialize(typename std::vector<Site<Point>>& sites, typename std::list<Point>& points, const bool centroidal) {
+    void initialize(typename std::vector< Site<Point> >& sites, typename std::list<Point>& points, const bool centroidal) {
       centroidal_ = centroidal;
       int sitesSize = static_cast<int>(sites.size());
       entries_.reserve(sitesSize);
