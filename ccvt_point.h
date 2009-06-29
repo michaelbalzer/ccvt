@@ -18,9 +18,9 @@
 #ifndef CCVT_POINT_H
 #define CCVT_POINT_H
 
+#include <assert.h>
 #include <list>
 #include <vector>
-#include <assert.h>
 
 namespace ccvt {
 
@@ -33,7 +33,7 @@ namespace ccvt {
       : x(0), y(0) {
     }
 
-    Point2(const double& x, const double& y)
+    Point2(const double x, const double y)
       :x(x), y(y) {
     }
 
@@ -41,7 +41,7 @@ namespace ccvt {
       : x(p.x), y(p.y) {
     }
 
-    inline const double& operator[](const int& i) const {
+    inline const double operator[](const int i) const {
       assert(i == 0 || i == 1);
       if (i == 0) {
         return x;
@@ -49,7 +49,7 @@ namespace ccvt {
       return y;
     }
 
-    inline double& operator[](const int& i) {
+    inline double operator[](const int i) {
       assert(i == 0 || i == 1);
       if (i == 0) {
         return x;
@@ -73,7 +73,7 @@ namespace ccvt {
       : x(0), y(0), z(0) {
     }
 
-    Point3(const double& x, const double& y, const double& z)
+    Point3(const double x, const double y, const double z)
       : x(x), y(y), z(z) {
     }
 
@@ -81,7 +81,7 @@ namespace ccvt {
       : x(p.x), y(p.y), z(p.z) {
     }
 
-    inline const double& operator[](const int& i) const {
+    inline const double operator[](const int i) const {
       assert(i == 0 || i == 1 || i == 2);
       if (i == 0) {
         return x;
@@ -92,7 +92,7 @@ namespace ccvt {
       return z;
     }
 
-    inline double& operator[](const int& i) {
+    inline double operator[](const int i) {
       assert(i == 0 || i == 1 || i == 2);
       if (i == 0) {
         return x;
@@ -135,12 +135,12 @@ namespace ccvt {
       }
     }
 
-    inline const double& operator[](const int& i) const {
+    inline const double operator[](const int i) const {
       assert(i >= 0 && i < d);
       return coordinates[i];
     }
 
-    inline double& operator[](const int& i) {
+    inline double operator[](const int i) {
       assert(i >= 0 && i < d);
       return coordinates[i];
     }

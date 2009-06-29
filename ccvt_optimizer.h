@@ -19,16 +19,13 @@
 #define CCVT_OPTIMIZER_H
 
 #include <algorithm>
+#include <assert.h>
 #include <limits>
-#include <list>
 #include <map>
-#include <set>
-#include <vector>
-#include <math.h>
 
 namespace ccvt {
 
-  template<class Point, class Metric>
+  template<class Site, class Point, class Metric>
   class Optimizer {
 
   private:
@@ -193,29 +190,37 @@ namespace ccvt {
 
   public:
 
-    Optimizer(const Metric& metric)
-      : metric_(metric) {
+    Optimizer() {
     }
 
     void clear() {
       entries_.clear();
       mapping_.clear();
+      sites_.clear();
+      metric_ = Metric();
     }
 
-    void initialize(typename std::vector< Site<Point> >& sites, typename std::list<Point>& points) {
-      int sitesSize = static_cast<int>(sites.size());
-      entries_.reserve(sitesSize);
+    void initialize(typename std::list<Site>& sites, typename std::list<Point>& points, const Metric& metric) {
+      clear();
 
+      metric_ = metric;
+
+      int sitesSize = static_cast<int>(sites.size());
+      sites_.reserve(sitesSize);
+      entries_.reserve(sitesSize);
+      int sumCapacities = 0;
       for (int i = 0; i < sitesSize; ++i) {
-        Site<Point>& site = sites[i];
+        Site& site = sites.front();
+        sumCapacities += site.capacity;
         if (site.capacity > 0) {
-          entries_.push_back(Entry(&site));
-          Entry& entry = entries_.back();
-          mapping_.insert(std::make_pair(site.id, &entry));
-        } else {
-          printf("\nWARNING: Site with zero capacity!");
+          sites_.push_back(site);
+          entries_.push_back(Entry(&sites_.back()));
+          mapping_.insert(std::make_pair(site.id, &entries_.back()));
         }
+        sites.pop_front();
       }
+      assert(sumCapacities == points.size()); // the sum of the site capacities must be equal to the number of points
+      sites_.resize(sites_.size());
       entries_.resize(entries_.size());
 
       KdTree kdTree(entries_, metric_, Point::D);
@@ -238,10 +243,6 @@ namespace ccvt {
         }
         entries_[i].update(metric_);
       }
-
-      if (!points.empty()) {
-        printf("WARNING: Points not empty, %d remaining!", static_cast<int>(points.size()));
-      }
     }
 
     bool optimize(const bool centroidalize) {
@@ -261,8 +262,8 @@ namespace ccvt {
             std::swap(entry1, entry2);
           }
 
-          Site<Point>* site1 = entry1->site;
-          Site<Point>* site2 = entry2->site;
+          Site* site1 = entry1->site;
+          Site* site2 = entry2->site;
           std::vector<Point>* points1 = &entry1->points;
           std::vector<Point>* points2 = &entry2->points;
 
@@ -348,7 +349,15 @@ namespace ccvt {
       return e;
     }
 
-    const std::vector<Point>* points(const int id) const {
+    inline double site_energy(const int id) const {
+      typename Entry::MapPtr::const_iterator it = mapping_.find(id);
+      if (it == mapping_.end()) {
+        return 0;
+      }
+      return it->second->energy;
+    }
+
+    inline const std::vector<Point>* site_points(const int id) const {
       typename Entry::MapPtr::const_iterator it = mapping_.find(id);
       if (it == mapping_.end()) {
         return NULL;
@@ -356,9 +365,21 @@ namespace ccvt {
       return &it->second->points;
     }
 
-    bool stable(const int id) const {
+    inline bool site_stable(const int id) const {
       typename Entry::MapPtr::const_iterator it = mapping_.find(id);
       return it == mapping_.end() || it->second->stable;
+    }
+
+    inline const std::vector<Site>& sites() {
+      return sites_;
+    }
+
+    inline void update_site_location(const int id, const Point& location) {
+      typename Entry::MapPtr::const_iterator it = mapping_.find(id);
+      if (it != mapping_.end()) {
+        it->second->site->location = location;
+        it->second->update(metric_);
+      }
     }
 
   private:
@@ -370,7 +391,7 @@ namespace ccvt {
         : radius(0), squaredRadius(0) {
       }
 
-      Bounding(const Point& center, const double& radius)
+      Bounding(const Point& center, const double radius)
         : center(center), radius(radius), squaredRadius(radius * radius) {
       }
 
@@ -400,7 +421,7 @@ namespace ccvt {
         : site(NULL), stable(false) {
       }
 
-      Entry(Site<Point> *const site)
+      Entry(Site *const site)
         : bounding(site->location, 0), site(site), stable(false) {
       }
 
@@ -409,11 +430,11 @@ namespace ccvt {
         bounding.update(site->location, points, metric);
       }
 
-      Bounding           bounding;
-      std::vector<Point> points;
-      Site<Point>*		   site;
-      bool		           stable;
-      double             energy;
+      Bounding            bounding;
+      std::vector<Point>  points;
+      Site*               site;
+      bool		            stable;
+      double              energy;
 
     };
 
@@ -426,7 +447,7 @@ namespace ccvt {
         : point(NULL), energySelf(0), energyOther(0) {
       }
 
-      Candidate(Point *const point, const double& energySelf, const double& energyOther)
+      Candidate(Point *const point, const double energySelf, const double energyOther)
         : point(point), energySelf(energySelf), energyOther(energyOther) {
       }
 
@@ -440,13 +461,14 @@ namespace ccvt {
 
     };
 
-    inline double energy(const Point& point, const Site<Point> *const site) const {
+    inline double energy(const Point& point, const Site *const site) const {
       return metric_.distance_square(point, site->location);
     }
 
-    Metric                  metric_;
-    typename Entry::Vector	entries_;
-    typename Entry::MapPtr  mapping_;
+    Metric                      metric_;
+    typename Entry::Vector	    entries_;
+    typename Entry::MapPtr      mapping_;
+    typename std::vector<Site>  sites_;
 
   };
 
