@@ -83,7 +83,7 @@ namespace ccvt {
     inline double distance_square(const Point& p1, const Point& p2) const {
       double distanceSquare = 0;
       for (int i = 0; i < Point::D; ++i) {
-        distance += (p1[i] - p2[i]) * (p1[i] - p2[i]);
+        distanceSquare += (p1[i] - p2[i]) * (p1[i] - p2[i]);
       }
       return distanceSquare;
     }

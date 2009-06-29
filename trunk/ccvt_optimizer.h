@@ -31,10 +31,6 @@ namespace ccvt {
   template<class Point, class Metric>
   class Optimizer {
 
-  public:
-
-    typedef Site<Point> Site;
-
   private:
 
     struct Entry;
@@ -206,13 +202,13 @@ namespace ccvt {
       mapping_.clear();
     }
 
-    void initialize(typename Site::Vector& sites, typename std::list<Point>& points, const bool centroidal) {
+    void initialize(typename std::vector<Site<Point>>& sites, typename std::list<Point>& points, const bool centroidal) {
       centroidal_ = centroidal;
       int sitesSize = static_cast<int>(sites.size());
       entries_.reserve(sitesSize);
 
       for (int i = 0; i < sitesSize; ++i) {
-        Site& site = sites[i];
+        Site<Point>& site = sites[i];
         if (site.capacity > 0) {
           entries_.push_back(Entry(&site));
           Entry& entry = entries_.back();
@@ -249,8 +245,7 @@ namespace ccvt {
       }
     }
 
-    bool optimize()
-    {
+    bool optimize() {
       int entriesSize = static_cast<int>(entries_.size());
       std::vector<bool> stability(entriesSize, true);
       for (int i = 0; i < entriesSize; ++i) {
@@ -267,8 +262,8 @@ namespace ccvt {
             std::swap(entry1, entry2);
           }
 
-          Site* site1 = entry1->site;
-          Site* site2 = entry2->site;
+          Site<Point>* site1 = entry1->site;
+          Site<Point>* site2 = entry2->site;
           std::vector<Point>* points1 = &entry1->points;
           std::vector<Point>* points2 = &entry2->points;
 
@@ -406,7 +401,7 @@ namespace ccvt {
         : site(NULL), stable(false) {
       }
 
-      Entry(Site *const site)
+      Entry(Site<Point> *const site)
         : bounding(site->location, 0), site(site), stable(false) {
       }
 
@@ -417,7 +412,7 @@ namespace ccvt {
 
       Bounding           bounding;
       std::vector<Point> points;
-      Site*		           site;
+      Site<Point>*		   site;
       bool		           stable;
       double             energy;
 
@@ -446,7 +441,7 @@ namespace ccvt {
 
     };
 
-    inline double energy(const Point& point, const Site *const site) const {
+    inline double energy(const Point& point, const Site<Point> *const site) const {
       return metric_.distance_square(point, site->location);
     }
 
