@@ -27,7 +27,7 @@ using namespace ccvt;
 // discrete space with constant density;
 // the points form a regular grid
 void constant_regular_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
-  double n = sqrt(double(numberOfPoints));
+  double n = sqrt(static_cast<double>(numberOfPoints));
   for (int x = 0; x < n; ++x) {
     for (int y = 0; y < n; ++y) {
       double dx = x / n * torusSize;
@@ -41,8 +41,8 @@ void constant_regular_density(Point2::List& points, const int numberOfPoints, co
 // the points are randomly distributed
 void constant_random_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
   for (int i = 0; i < numberOfPoints; ++i) {
-    double x = double(rand() % RAND_MAX) / RAND_MAX * torusSize;
-    double y = double(rand() % RAND_MAX) / RAND_MAX * torusSize;
+    double x = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * torusSize;
+    double y = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * torusSize;
     points.push_back(Point2(x, y));
   }
 }
@@ -52,11 +52,11 @@ void constant_random_density(Point2::List& points, const int numberOfPoints, con
 void nonconstant_density(Point2::List& points, const int numberOfPoints, const double torusSize) {
   const double E = 2.718281828459;
   const double PI = 3.141592653590;
-  while (points.size() < unsigned int(numberOfPoints)) {
-    double x = double(rand() % RAND_MAX) / RAND_MAX * 2 - 1;
-    double y = double(rand() % RAND_MAX) / RAND_MAX * 2 - 1;
+  while (points.size() < static_cast<unsigned int>(numberOfPoints)) {
+    double x = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * 2 - 1;
+    double y = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * 2 - 1;
     double p = pow(E, -20.0 * x * x - 20.0 * y * y) + 0.2 * sin(PI * x) * sin(PI * x) * sin(PI * y) * sin(PI * y);
-    double r = double(rand() % RAND_MAX) / RAND_MAX;
+    double r = static_cast<double>(rand() % RAND_MAX) / RAND_MAX;
     if (p >= r) {
       points.push_back(Point2((x + 1) / 2 * torusSize, (y + 1) / 2 * torusSize));
     }
