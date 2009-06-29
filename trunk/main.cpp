@@ -15,8 +15,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <fstream>
 #include <time.h>
-#include "ccvt_functions.h"
 #include "ccvt_metric.h"
 #include "ccvt_optimizer.h"
 #include "ccvt_point.h"
@@ -63,6 +63,35 @@ void nonconstant_density(Point2::List& points, const int numberOfPoints, const d
   }
 }
 
+// export sites to an EPS image
+bool save_eps(const char* filename, const Site<Point2>::Vector& sites, const double width, const double height, const double radius) {
+  std::ofstream stream(filename, std::ios::out);
+  if (stream.bad()) {
+    return false;
+  }
+
+  stream << "%!PS-Adobe EPSF-3.0\n";
+  stream << "%%HiResBoundingBox: " << 0.0 << " " << 0.0 << " " << width << " " << height << "\n";
+  stream << "%%BoundingBox: " << 0 << " " << 0 << " " << static_cast<int>(width) << " " << static_cast<int>(height) << "\n";
+  stream << "\n";
+  stream << "%% Sites: " << sites.size() << "\n";
+  stream << "\n";
+  stream << "/radius { " << radius << " } def\n";
+  stream << "\n";
+  stream << "/p { radius 0 360 arc closepath fill } def\n";
+  stream << "\n";
+  stream << "0 0 0 setrgbcolor\n";
+  stream << "\n";
+  for (unsigned int i = 0; i < sites.size(); ++i) {
+    stream << sites[i].location.x << " " << sites[i].location.y << " p\n";
+  }
+  stream << "\n";
+  stream << "showpage\n";
+
+  stream.close();
+  return true;
+}
+
 int main(int, char*[]) {
   const int     NUMBER_SITES      = 256;
   const int     NUMBER_POINTS     = 1024 * NUMBER_SITES;
@@ -74,7 +103,7 @@ int main(int, char*[]) {
   const char*   RESULT_FILENAME   = "result.eps";
   const double  RESULT_RADIUS     = 5;
   
-  typedef Optimizer<Point2, MetricToroidalEuclidean2> Optimizer;
+  typedef Optimizer<Site<Point2>, Point2, MetricToroidalEuclidean2> Optimizer;
 
   // intializing the underlying discrete space
   Point2::List points;
@@ -86,13 +115,13 @@ int main(int, char*[]) {
 
   // initializing the Voronoi sites with equal capacity
   unsigned int overallCapacity = static_cast<int>(points.size());
-  Site<Point2>::Vector sites(NUMBER_SITES);
-  for (int i = 0; i < static_cast<int>(sites.size()); ++i) {
+  Site<Point2>::List sites;
+  for (int i = 0; i < NUMBER_SITES; ++i) {
     double x = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * TORUS_SIZE;
     double y = static_cast<double>(rand() % RAND_MAX) / RAND_MAX * TORUS_SIZE;
-    int capacity = overallCapacity / (sites.size() - i);
+    int capacity = overallCapacity / (NUMBER_SITES - i);
     overallCapacity -= capacity;
-    sites[i] = Site<Point2>(i, capacity, Point2(x, y));
+    sites.push_back(Site<Point2>(i, capacity, Point2(x, y)));
   }
 
   clock_t start = clock();
@@ -100,9 +129,9 @@ int main(int, char*[]) {
   // initializing the CCVT
   clock_t startInitialization = clock();
   printf("initialization...");
+  Optimizer optimizer;
   MetricToroidalEuclidean2 metric(Point2(TORUS_SIZE, TORUS_SIZE));
-  Optimizer optimizer(metric);
-  optimizer.initialize(sites, points);
+  optimizer.initialize(sites, points, metric);
   printf("done\n");
   clock_t endInitialization = clock();
 
@@ -116,12 +145,14 @@ int main(int, char*[]) {
   } while (!stable);
   
   clock_t end = clock();
+
+  const Site<Point2>::Vector& result = optimizer.sites();
   
   // writing the Voronoi sites to console
   if (RESULT_PRINT) {
     printf("\nresult:\n");
-    for (unsigned int j = 0; j < sites.size(); ++j) {
-      printf("site %d: %f, %f\n", sites[j].id, sites[j].location.x, sites[j].location.y);
+    for (unsigned int i = 0; i < result.size(); ++i) {
+      printf("site %d: %f, %f\n", result[i].id, result[i].location.x, result[i].location.y);
     }
   }
 
@@ -130,7 +161,7 @@ int main(int, char*[]) {
 
   // writing the Voronoi sites to EPS file
   if (RESULT_FILE) {
-    if (Functions::save_eps(RESULT_FILENAME, sites, TORUS_SIZE, TORUS_SIZE, RESULT_RADIUS)) {
+    if (save_eps(RESULT_FILENAME, result, TORUS_SIZE, TORUS_SIZE, RESULT_RADIUS)) {
       printf("\nresult saved in '%s'\n", RESULT_FILENAME);
     } else {
       printf("\nresult could not be saved in '%s'\n", RESULT_FILENAME);

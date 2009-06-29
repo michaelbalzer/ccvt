@@ -108,6 +108,9 @@ namespace ccvt {
 
     Point2 size;
 
+    MetricToroidalEuclidean2()
+      : size(1, 1) {
+    }
     MetricToroidalEuclidean2(const Point2& size)
       : size(size) {
     }
@@ -181,6 +184,10 @@ namespace ccvt {
   struct MetricToroidalEuclidean3 {
 
     Point3 size;
+
+    MetricToroidalEuclidean3()
+      : size(1, 1, 1) {
+    }
 
     MetricToroidalEuclidean3(const Point3& size)
       : size(size) {
@@ -280,6 +287,12 @@ namespace ccvt {
   struct MetricToroidalEuclidean {
 
     Point size;
+
+    MetricToroidalEuclidean() {
+      for (int i = 0; i < Point::D; ++i) {
+        size[i] = 1;
+      }
+    }
 
     MetricToroidalEuclidean(const Point& size)
       : size(size) {
