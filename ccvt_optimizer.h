@@ -21,7 +21,9 @@
 #include <algorithm>
 #include <assert.h>
 #include <limits>
+#include <list>
 #include <map>
+#include <vector>
 
 namespace ccvt {
 
@@ -145,7 +147,7 @@ namespace ccvt {
 
       NearestNeighborResult nearest_neighbor(Node* node, const Point& point, const int depth, double& minDistance) {
         if (node->disabled) {
-          return NearestNeighborResult(NULL, NULL);
+          return NearestNeighborResult(reinterpret_cast<Node*>(NULL), reinterpret_cast<Entry*>(NULL));
         }
 
         if (node->entry != NULL) {
